@@ -1,8 +1,10 @@
-# instagram_post_unliker
+# Instagram Post Unliker
 
 Run `run.bat`.
 
 If Python 3 is missing, the launcher will try to install it automatically with `winget` before creating `.venv` and starting the script.
+
+The Python entrypoint is `main.py`.
 
 When the Edge WebDriver window opens:
 

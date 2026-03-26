@@ -211,7 +211,7 @@ try {
     }
 
     Write-Host "Starting script..."
-    & $venvPython instagram_post_unliker.py
+    & $venvPython main.py
     if ($LASTEXITCODE -ne 0) {
         throw "Script exited with an error."
     }

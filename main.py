@@ -3,7 +3,7 @@ from time import sleep
 import sys
 
 from selenium import webdriver
-from selenium.common.exceptions import      (
+from selenium.common.exceptions import (
     ElementClickInterceptedException,
     StaleElementReferenceException,
     TimeoutException,
@@ -36,10 +36,7 @@ CONFIRM_UNLIKE_XPATH = (
 
 
 def wait_for_clickable_text(driver: webdriver.Edge, text: str) -> WebElement:
-    xpath = (
-        f"//span[normalize-space()='{text}']"
-        f"|//div[normalize-space()='{text}']"
-    )
+    xpath = f"//span[normalize-space()='{text}']|//div[normalize-space()='{text}']"
     return WebDriverWait(driver, WAIT_SECONDS).until(
         EC.element_to_be_clickable((By.XPATH, xpath))
     )
@@ -48,10 +45,7 @@ def wait_for_clickable_text(driver: webdriver.Edge, text: str) -> WebElement:
 def try_wait_for_clickable_text(
     driver: webdriver.Edge, text: str, timeout: int = WAIT_SECONDS
 ) -> WebElement | None:
-    xpath = (
-        f"//span[normalize-space()='{text}']"
-        f"|//div[normalize-space()='{text}']"
-    )
+    xpath = f"//span[normalize-space()='{text}']|//div[normalize-space()='{text}']"
     try:
         return WebDriverWait(driver, timeout).until(
             EC.element_to_be_clickable((By.XPATH, xpath))
@@ -61,9 +55,7 @@ def try_wait_for_clickable_text(
 
 
 def js_click(driver: webdriver.Edge, element: WebElement) -> None:
-    driver.execute_script(
-        "arguments[0].scrollIntoView({block: 'center'});", element
-    )
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
     driver.execute_script("arguments[0].click();", element)
 
 
@@ -94,7 +86,9 @@ def begin_batch_with_retries(driver: webdriver.Edge) -> bool:
     for attempt in range(1, MAX_SELECT_REFRESH_RETRIES + 1):
         if click_select_button(driver):
             if attempt > 1:
-                print(f"Select found after refresh retry {attempt}/{MAX_SELECT_REFRESH_RETRIES}.")
+                print(
+                    f"Select found after refresh retry {attempt}/{MAX_SELECT_REFRESH_RETRIES}."
+                )
             return True
 
         print(
@@ -163,9 +157,7 @@ def select_posts(driver: webdriver.Edge, target_count: int) -> int:
             break
 
         previous_count = current_count
-        driver.execute_script(
-            "window.scrollBy(0, Math.max(window.innerHeight, 900));"
-        )
+        driver.execute_script("window.scrollBy(0, Math.max(window.innerHeight, 900));")
         sleep(1)
 
     return selected
@@ -216,8 +208,6 @@ def click_unlike_flow(driver: webdriver.Edge) -> bool:
 
 
 def get_runtime_dir() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
     return Path(__file__).resolve().parent
 
 
