@@ -74,7 +74,7 @@ function New-PythonCommand {
         [string[]]$Arguments = @()
     )
 
-    return @{
+    return [pscustomobject]@{
         Executable = $Executable
         Arguments = @($Arguments)
     }
@@ -82,7 +82,7 @@ function New-PythonCommand {
 
 function Test-PythonCommand {
     param(
-        [hashtable]$PythonCommand
+        [psobject]$PythonCommand
     )
 
     if (-not $PythonCommand -or -not $PythonCommand.Executable) {
@@ -171,7 +171,7 @@ function Ensure-Python {
 
 function Invoke-Python {
     param(
-        [hashtable]$PythonCommand,
+        [psobject]$PythonCommand,
         [string[]]$Arguments
     )
 
