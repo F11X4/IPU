@@ -119,8 +119,8 @@ function Get-PythonCommand {
             ForEach-Object { $_.FullName }
     }
 
-    if ($env:'ProgramFiles(x86)') {
-        $pythonCandidates += Get-ChildItem -Path $env:'ProgramFiles(x86)' -Filter python.exe -Recurse -ErrorAction SilentlyContinue |
+    if (${env:ProgramFiles(x86)}) {
+        $pythonCandidates += Get-ChildItem -Path ${env:ProgramFiles(x86)} -Filter python.exe -Recurse -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -like "*\Python*\python.exe" } |
             Sort-Object FullName -Descending |
             ForEach-Object { $_.FullName }
