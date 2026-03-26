@@ -148,7 +148,7 @@ function Get-PythonCommand {
 function Ensure-Python {
     $pythonCommand = Get-PythonCommand
     if ($pythonCommand) {
-        return $pythonCommand
+        return ,$pythonCommand
     }
 
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
@@ -156,7 +156,7 @@ function Ensure-Python {
     }
 
     Write-Host "Python 3 not found. Installing Python with winget..."
-    winget install -e --id Python.Python.3.13 --scope user --accept-package-agreements --accept-source-agreements
+    winget install -e --id Python.Python.3.13 --scope user --accept-package-agreements --accept-source-agreements | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "winget failed to install Python 3."
     }
@@ -166,7 +166,7 @@ function Ensure-Python {
         throw "Python 3 was installed but is not available to this session yet. Open a new PowerShell window and rerun bootstrap.ps1."
     }
 
-    return $pythonCommand
+    return ,$pythonCommand
 }
 
 function Invoke-Python {
