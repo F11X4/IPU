@@ -68,20 +68,29 @@ function Ensure-EdgeDriver {
     Write-Host "Installed local msedgedriver.exe for Edge $edgeVersion."
 }
 
-function Test-PythonCommand {
+function New-PythonCommand {
     param(
-        [string[]]$PythonCommand
+        [string]$Executable,
+        [string[]]$Arguments = @()
     )
 
-    if (-not $PythonCommand -or $PythonCommand.Count -eq 0) {
+    return @{
+        Executable = $Executable
+        Arguments = @($Arguments)
+    }
+}
+
+function Test-PythonCommand {
+    param(
+        [hashtable]$PythonCommand
+    )
+
+    if (-not $PythonCommand -or -not $PythonCommand.Executable) {
         return $false
     }
 
-    $pythonExe = $PythonCommand[0]
-    $pythonBaseArgs = @()
-    if ($PythonCommand.Length -gt 1) {
-        $pythonBaseArgs = $PythonCommand[1..($PythonCommand.Length - 1)]
-    }
+    $pythonExe = $PythonCommand.Executable
+    $pythonBaseArgs = @($PythonCommand.Arguments)
 
     $versionScript = 'import sys; raise SystemExit(0 if sys.version_info.major == 3 else 1)'
 
@@ -95,19 +104,6 @@ function Test-PythonCommand {
 }
 
 function Get-PythonCommand {
-    $commandCandidates = @(
-        @("py", "-3"),
-        @("python")
-    )
-
-    foreach ($commandCandidate in $commandCandidates) {
-        if (Get-Command $commandCandidate[0] -ErrorAction SilentlyContinue) {
-            if (Test-PythonCommand -PythonCommand $commandCandidate) {
-                return $commandCandidate
-            }
-        }
-    }
-
     $pythonCandidates = @()
 
     if ($env:LOCALAPPDATA) {
@@ -123,12 +119,26 @@ function Get-PythonCommand {
             ForEach-Object { $_.FullName }
     }
 
+    if ($env:'ProgramFiles(x86)') {
+        $pythonCandidates += Get-ChildItem -Path $env:'ProgramFiles(x86)' -Filter python.exe -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\Python*\python.exe" } |
+            Sort-Object FullName -Descending |
+            ForEach-Object { $_.FullName }
+    }
+
     foreach ($candidate in $pythonCandidates | Select-Object -Unique) {
         if (Test-Path $candidate) {
-            $resolvedCandidate = @($candidate)
+            $resolvedCandidate = New-PythonCommand -Executable $candidate
             if (Test-PythonCommand -PythonCommand $resolvedCandidate) {
                 return $resolvedCandidate
             }
+        }
+    }
+
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        $pyLauncher = New-PythonCommand -Executable "py" -Arguments @("-3")
+        if (Test-PythonCommand -PythonCommand $pyLauncher) {
+            return $pyLauncher
         }
     }
 
@@ -161,15 +171,12 @@ function Ensure-Python {
 
 function Invoke-Python {
     param(
-        [string[]]$PythonCommand,
+        [hashtable]$PythonCommand,
         [string[]]$Arguments
     )
 
-    $pythonExe = $PythonCommand[0]
-    $pythonBaseArgs = @()
-    if ($PythonCommand.Length -gt 1) {
-        $pythonBaseArgs = $PythonCommand[1..($PythonCommand.Length - 1)]
-    }
+    $pythonExe = $PythonCommand.Executable
+    $pythonBaseArgs = @($PythonCommand.Arguments)
 
     & $pythonExe @pythonBaseArgs @Arguments
     if ($LASTEXITCODE -ne 0) {
