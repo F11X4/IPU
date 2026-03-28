@@ -1,6 +1,6 @@
 from pathlib import Path
+from threading import Event, Thread
 from time import sleep
-import sys
 
 from selenium import webdriver
 from selenium.common.exceptions import (
@@ -14,14 +14,20 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from config import (
+    AUTO_START_ENABLED,
+    AUTO_START_POLL_INTERVAL_SECONDS,
+    LIKES_URL,
+    MAX_POSTS_PER_BATCH,
+    MAX_SELECT_REFRESH_RETRIES,
+    MAX_UNLIKE_REFRESH_RETRIES,
+    POST_UNLIKE_DELAY_SECONDS,
+    SELECT_BUTTON_TIMEOUT_SECONDS,
+    START_READY_BUTTON_TEXT,
+    WAIT_SECONDS,
+)
 
-LIKES_URL = "https://www.instagram.com/your_activity/interactions/likes"
-MAX_POSTS_PER_BATCH = 100
-WAIT_SECONDS = 20
-POST_UNLIKE_DELAY_SECONDS = 5
-SELECT_BUTTON_TIMEOUT_SECONDS = 10
-MAX_SELECT_REFRESH_RETRIES = 50
-MAX_UNLIKE_REFRESH_RETRIES = 50
+
 CHECKBOX_XPATH = (
     "//div[@data-testid='bulk_action_checkbox']"
     "//div[@role='button' and @aria-label='Toggle checkbox']"
@@ -224,15 +230,59 @@ def create_edge_driver() -> webdriver.Edge:
     return webdriver.Edge(service=service)
 
 
+def can_auto_start(driver: webdriver.Edge) -> bool:
+    if "/your_activity/interactions/likes" not in driver.current_url:
+        return False
+
+    ready_button = try_wait_for_clickable_text(
+        driver, START_READY_BUTTON_TEXT, timeout=1
+    )
+    return ready_button is not None
+
+
+def wait_for_start_signal(driver: webdriver.Edge) -> None:
+    if not AUTO_START_ENABLED:
+        input(
+            "Log in if needed, open the likes page, then press Enter to start..."
+        )
+        return
+
+    manual_start_requested = Event()
+
+    def wait_for_manual_start() -> None:
+        try:
+            input(
+                "Waiting for Instagram likes page. Press Enter at any time to start manually...\n"
+            )
+            manual_start_requested.set()
+        except EOFError:
+            return
+
+    Thread(target=wait_for_manual_start, daemon=True).start()
+    print(
+        "Waiting for the Instagram likes page. "
+        "The script will start automatically when the Select button is available."
+    )
+
+    while True:
+        if manual_start_requested.is_set():
+            print("Manual start requested from console.")
+            return
+
+        if can_auto_start(driver):
+            print("Likes page is ready. Starting automatically.")
+            return
+
+        sleep(AUTO_START_POLL_INTERVAL_SECONDS)
+
+
 def main() -> None:
     driver = create_edge_driver()
     driver.maximize_window()
 
     try:
         driver.get(LIKES_URL)
-        input(
-            "Log in if needed and confirm the Select button exists, then press Enter to start..."
-        )
+        wait_for_start_signal(driver)
 
         total_processed = 0
         batch_number = 0

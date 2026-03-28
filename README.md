@@ -9,7 +9,8 @@ The Python entrypoint is `main.py`.
 When the Edge WebDriver window opens:
 
 1. Log in to Instagram.
-2. Make sure you are on the page where the `Select` button is visible.
-3. Go back to the console and press Enter.
+2. Go to the likes page if Instagram does not open there automatically.
+3. The script will start automatically when the `Select` button becomes available.
+4. You can still press Enter in the console to force a manual start.
 
 After that, the script will start removing likes automatically.
